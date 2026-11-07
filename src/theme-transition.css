@@ -1,0 +1,3 @@
+.theme-toggle{overflow:hidden;position:relative}.theme-toggle svg{transition:transform .38s cubic-bezier(.22,1,.36,1),opacity .2s ease}.theme-toggle:active svg{transform:rotate(150deg) scale(.8)}
+::view-transition-old(root){animation:theme-out .32s ease both}::view-transition-new(root){animation:theme-in .42s cubic-bezier(.22,1,.36,1) both}@keyframes theme-out{to{opacity:0;transform:scale(.985)}}@keyframes theme-in{from{clip-path:circle(0% at 92% 28px);opacity:.45}to{clip-path:circle(150% at 92% 28px);opacity:1}}
+@media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}.theme-toggle svg{transition:none}}
