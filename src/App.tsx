@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { AdminGate } from './components/AdminPortal'
 import { PublicLayout } from './components/Storefront'
 import { getCachedStoreSettings, getStoreSettings } from './services/store'
 import type { StoreSettings } from './types/database'
+
+const AdminGate = lazy(() =>
+  import('./components/AdminPortal').then(({ AdminGate: Component }) => ({ default: Component })),
+)
 
 export default function App() {
   const [settings, setSettings] = useState<StoreSettings>(() => getCachedStoreSettings())
@@ -25,7 +28,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/admin/*" element={<AdminGate settings={settings} onSettingsChange={setSettings} />} />
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense fallback={<div role="status">Loading admin…</div>}>
+              <AdminGate settings={settings} onSettingsChange={setSettings} />
+            </Suspense>
+          }
+        />
         <Route path="/*" element={<PublicLayout settings={settings} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
