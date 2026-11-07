@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import {
   AlertTriangle,
@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import { gsap, prefersReducedMotion } from '../lib/motion'
 import {
   adjustInventory,
   checkSystemHealth,
@@ -77,6 +78,7 @@ import type {
   SystemHealth,
 } from '../types/database'
 import { cash, Photo, StockBadge, ThemeToggle, useDarkMode } from './Storefront'
+import { AdminSectionSkeleton, InlineSpinner, StudioRouteLoader } from './Loaders'
 
 const ORDER_STATUSES: OrderStatus[] = ['Pending', 'Confirmed', 'Processing', 'Completed', 'Cancelled']
 
@@ -141,7 +143,13 @@ export function AdminGate({
     return () => subscription.subscription.unsubscribe()
   }, [checkAccess])
 
-  if (!ready) return <div className="state" style={{ margin: 40 }}>Checking administrator session…</div>
+  if (!ready)
+    return (
+      <StudioRouteLoader
+        title="Verifying administrator session"
+        subtitle="AUTHENTICATING CREDENTIALS & PERMISSIONS"
+      />
+    )
   return ok ? (
     <Admin settings={settings} userEmail={userEmail} onSettingsChange={onSettingsChange} />
   ) : (
@@ -235,9 +243,27 @@ function Login({
   }
 
   const sqlSnippet = `insert into public.profiles (id, email, role)\nselect id, email, 'admin' from auth.users where email = '${userEmail || 'you@example.com'}'\non conflict (id) do update set role = 'admin';`
+  const loginRef = useRef<HTMLElement>(null)
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion() || !loginRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.login-visual > *',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.65, stagger: 0.08, ease: 'power3.out', clearProps: 'transform,opacity' },
+      )
+      gsap.fromTo(
+        '.login-panel > *',
+        { y: 18, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.6, stagger: 0.07, ease: 'power3.out', clearProps: 'transform,opacity' },
+      )
+    }, loginRef)
+    return () => ctx.revert()
+  }, [])
 
   return (
-    <main className="login-split">
+    <main className="login-split" ref={loginRef}>
       <div className="login-visual">
         <Link className="brand" to="/">
           <span>
@@ -536,8 +562,9 @@ function Admin({
           </div>
 
           <div style={{ position: 'relative' }}>
-            <Link className="button secondary sm-btn" to="/">
-              Storefront <ExternalLink size={13} />
+            <Link className="button secondary sm-btn storefront-jump-btn" to="/" title="View storefront">
+              <span className="hide-xs">Storefront</span>
+              <ExternalLink size={13} />
             </Link>
 
             <button
@@ -613,8 +640,29 @@ function Page({
   action?: React.ReactNode
   children: React.ReactNode
 }) {
+  const pageRef = useRef<HTMLElement>(null)
+
+  useLayoutEffect(() => {
+    if (prefersReducedMotion() || !pageRef.current) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        ':scope > .page-title-row, :scope > .admin-copy, :scope > .metrics > .metric, :scope > .panel, :scope > .settings-layout > *',
+        { y: 16, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.5,
+          stagger: 0.045,
+          ease: 'power3.out',
+          clearProps: 'transform,opacity',
+        },
+      )
+    }, pageRef)
+    return () => ctx.revert()
+  }, [title])
+
   return (
-    <main className="admin-page">
+    <main className="admin-page" ref={pageRef}>
       <div className="page-title-row">
         <h1>{title}</h1>
         {action && <div className="page-actions">{action}</div>}
@@ -688,7 +736,12 @@ function Dashboard() {
     }
   }
 
-  if (!summary) return <div className="state" style={{ margin: 28 }}>Loading dashboard…</div>
+  if (!summary)
+    return (
+      <Page title="Overview">
+        <AdminSectionSkeleton showMetrics rows={5} label="LOADING ANALYTICS & TELEMETRY…" />
+      </Page>
+    )
 
   return (
     <Page
@@ -896,7 +949,7 @@ function Products() {
       )}
 
       {loading ? (
-        <div className="state">Loading products…</div>
+        <AdminSectionSkeleton rows={5} label="SYNCING CATALOG PRODUCTS…" />
       ) : filtered.length ? (
         <div className="panel table-wrap">
           <table>
@@ -1822,7 +1875,7 @@ function Orders() {
       )}
 
       {loading ? (
-        <div className="state">Loading orders…</div>
+        <AdminSectionSkeleton rows={5} label="LOADING VERIFIED ORDERS…" />
       ) : filtered.length ? (
         <div className="panel table-wrap">
           <OrderTable orders={filtered} onStatusChange={handleStatusChange} onDelete={handleDelete} />
@@ -2098,6 +2151,7 @@ function OrderFormModal({
             Cancel
           </button>
           <button className="button" disabled={busy}>
+            {busy && <InlineSpinner size={14} />}
             {busy ? 'Saving…' : 'Save order'}
           </button>
         </div>
@@ -2155,7 +2209,7 @@ function ReviewsPage() {
       </div>
 
       {loading ? (
-        <div className="state">Loading reviews…</div>
+        <AdminSectionSkeleton rows={4} label="FETCHING CUSTOMER REVIEWS…" />
       ) : shown.length ? (
         <div className="panel table-wrap">
           <table>

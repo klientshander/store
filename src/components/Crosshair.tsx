@@ -42,9 +42,9 @@ export default function Crosshair({ color = '#ffffff', containerRef, thickness =
       if (visible || pulse > 0) frame = requestAnimationFrame(draw)
     }
     const wake = () => { if (!frame) frame = requestAnimationFrame(() => { frame = 0; draw() }) }
-    const move = (event: PointerEvent) => { const rect = host.getBoundingClientRect(); targetX = event.clientX - rect.left; targetY = event.clientY - rect.top; if (!visible) { x = targetX; y = targetY }; visible = true; target = event.target instanceof Element ? event.target.closest('a,button,[data-crosshair-target]') : null; wake() }
+    const move = (event: PointerEvent) => { if (event.pointerType === 'touch') return; const rect = host.getBoundingClientRect(); targetX = event.clientX - rect.left; targetY = event.clientY - rect.top; if (!visible) { x = targetX; y = targetY }; visible = true; target = event.target instanceof Element ? event.target.closest('a,button,[data-crosshair-target]') : null; wake() }
     const leave = () => { visible = false; target = null; host.classList.remove('crosshair-hidden') }
-    const click = () => { if (clickPulse && !reduce) { pulse = 1; wake() } }
+    const click = (event: PointerEvent) => { if (event.pointerType === 'touch') return; if (clickPulse && !reduce) { pulse = 1; wake() } }
     const enter = () => { if (hideCursor) host.classList.add('crosshair-hidden') }
     const observer = new ResizeObserver(resize); observer.observe(host); resize(); host.addEventListener('pointermove', move); host.addEventListener('pointerleave', leave); host.addEventListener('pointerenter', enter); host.addEventListener('pointerdown', click)
     return () => { cancelAnimationFrame(frame); observer.disconnect(); host.removeEventListener('pointermove', move); host.removeEventListener('pointerleave', leave); host.removeEventListener('pointerenter', enter); host.removeEventListener('pointerdown', click); host.classList.remove('crosshair-hidden') }

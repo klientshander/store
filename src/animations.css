@@ -1,66 +1,253 @@
-@keyframes nook-rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
+/* ==========================================================================
+   Orbital Loaders, Shimmer Skeletons & Motion Guards
+   ========================================================================== */
+
+@keyframes badge-beacon {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.22);
   }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0.08);
+  }
+}
+
+@keyframes nook-spin {
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
-@keyframes nook-float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-7px); }
+@keyframes nook-spin-rev {
+  to {
+    transform: rotate(-360deg);
+  }
 }
 
-@keyframes nook-glow {
-  0%, 100% { box-shadow: 0 13px 24px #f59e0b3d; }
-  50% { box-shadow: 0 13px 38px #f59e0b9c; }
+@keyframes nook-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
 }
 
-@keyframes nook-pulse {
-  0% { box-shadow: 0 0 0 0 #f59e0b55; }
-  70% { box-shadow: 0 0 0 12px transparent; }
-  100% { box-shadow: 0 0 0 0 transparent; }
+@keyframes nook-indeterminate {
+  0% {
+    transform: translateX(-110%) scaleX(0.35);
+  }
+  50% {
+    transform: translateX(15%) scaleX(0.65);
+  }
+  100% {
+    transform: translateX(185%) scaleX(0.35);
+  }
 }
 
-.hero-copy > * {
-  opacity: 0;
-  animation: nook-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.hero-copy > :nth-child(1) { animation-delay: 0.05s; }
-.hero-copy > :nth-child(2) { animation-delay: 0.12s; }
-.hero-copy > :nth-child(3) { animation-delay: 0.19s; }
-.hero-copy > :nth-child(4) { animation-delay: 0.26s; }
-
-.hero-visual {
-  animation: nook-rise 0.8s 0.16s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-.scene-screen {
-  animation: nook-float 4.5s 1s ease-in-out infinite;
-}
-.scene-strip {
-  animation: nook-glow 3.5s ease-in-out infinite;
-}
-.scene-lamp::after {
-  animation: nook-pulse 2.8s 1.3s ease-out infinite;
+.badge-pulse {
+  animation: badge-beacon 2.4s ease-in-out infinite;
 }
 
-.product-card,
-.recent-card {
-  animation: nook-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+.inline-orbital-spinner {
+  animation: nook-spin 0.85s linear infinite;
+  flex-shrink: 0;
 }
-.product-card:nth-child(2), .recent-card:nth-child(2) { animation-delay: 0.05s; }
-.product-card:nth-child(3), .recent-card:nth-child(3) { animation-delay: 0.1s; }
-.product-card:nth-child(4), .recent-card:nth-child(4) { animation-delay: 0.15s; }
-.product-card:nth-child(5) { animation-delay: 0.2s; }
-.product-card:nth-child(6) { animation-delay: 0.25s; }
-.product-card:nth-child(7) { animation-delay: 0.3s; }
-.product-card:nth-child(8) { animation-delay: 0.35s; }
+
+/* ==========================================================================
+   1. Orbital Emblem & Route / Admin Session Loader Card
+   ========================================================================== */
+
+.preloader-emblem {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 8px;
+}
+
+.orbital-ring {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.orbital-ring.outer {
+  inset: 0;
+  border: 1px dashed var(--border-strong);
+  animation: nook-spin 9s linear infinite;
+}
+
+.orbital-ring.inner {
+  inset: 8px;
+  border: 2px solid transparent;
+  border-top-color: var(--warm);
+  border-right-color: rgba(245, 158, 11, 0.35);
+  animation: nook-spin-rev 1.4s cubic-bezier(0.5, 0.15, 0.5, 0.85) infinite;
+}
+
+.orbital-core {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  color: var(--warm);
+  display: grid;
+  place-items: center;
+  box-shadow: var(--shadow-md);
+}
+
+.studio-route-loader {
+  min-height: 74dvh;
+  display: grid;
+  place-items: center;
+  padding: 32px 16px;
+}
+
+.route-loader-card {
+  width: min(360px, 100%);
+  padding: 30px 24px 26px;
+  border-radius: 20px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.route-loader-card b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.route-loader-card span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  color: var(--sub);
+}
+
+.indeterminate-track {
+  width: 100%;
+  height: 3px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+
+.indeterminate-bar {
+  width: 55%;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--warm), var(--accent-hot));
+  animation: nook-indeterminate 1.45s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ==========================================================================
+   2. Architectural Shimmer Skeletons (Storefront & Admin)
+   ========================================================================== */
+
+.skeleton-stage {
+  display: grid;
+  gap: 16px;
+}
+
+.sync-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  box-shadow: var(--shadow-sm);
+}
+
+.sync-status-pill svg {
+  color: var(--warm);
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skel-shimmer {
+  background: linear-gradient(
+    105deg,
+    var(--surface-2) 28%,
+    color-mix(in srgb, var(--card) 72%, var(--surface-2)) 48%,
+    var(--surface-2) 68%
+  );
+  background-size: 220% 100%;
+  animation: nook-shimmer 1.55s ease-in-out infinite;
+}
+
+:root[data-theme="dark"] .skel-shimmer {
+  background: linear-gradient(
+    105deg,
+    #16161e 28%,
+    #23232f 48%,
+    #16161e 68%
+  );
+  background-size: 220% 100%;
+}
+
+.skel-line {
+  display: block;
+  border-radius: 6px;
+}
+
+.skel-pill.top-left {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 48px;
+  height: 22px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+}
+
+.skel-circle.top-right {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--card) 65%, transparent);
+}
+
+.skel-table-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.skel-table-row:last-child {
+  border-bottom: 0;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;

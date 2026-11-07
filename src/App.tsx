@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { StudioRouteLoader } from './components/Loaders'
 import { PublicLayout } from './components/Storefront'
 import { getCachedStoreSettings, getStoreSettings } from './services/store'
 import type { StoreSettings } from './types/database'
@@ -31,7 +32,9 @@ export default function App() {
         <Route
           path="/admin/*"
           element={
-            <Suspense fallback={<div role="status">Loading admin…</div>}>
+            <Suspense
+              fallback={<StudioRouteLoader title="Loading admin studio" subtitle="MOUNTING MANAGEMENT CONSOLE" />}
+            >
               <AdminGate settings={settings} onSettingsChange={setSettings} />
             </Suspense>
           }
