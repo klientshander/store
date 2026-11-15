@@ -9,9 +9,10 @@ export const DEFAULT_STORE_SETTINGS: StoreSettings = {
   hero_subtitle: 'Browse thoughtful products, then open the original TikTok Shop listing whenever you are ready to buy.',
   tiktok_profile_url: 'https://www.tiktok.com',
   support_email: 'hello@nook.store',
-  free_shipping_text: 'Free shipping over $150',
+  free_shipping_text: 'Free shipping over ₱1,500',
   returns_text: '30-day returns',
   warranty_text: '2-year warranty',
+  currency: 'PHP',
 }
 
 function makeArtDataUri(bgStart: string, bgEnd: string, innerSvg: string): string {

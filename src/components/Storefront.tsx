@@ -36,6 +36,7 @@ import {
   useTilt3D,
 } from '../lib/motion'
 import {
+  getActiveCurrency,
   getApprovedReviews,
   getCategories,
   getEffectiveStock,
@@ -49,8 +50,15 @@ import type { Category, Product, Review, StoreSettings } from '../types/database
 import Crosshair from './Crosshair'
 import { CatalogSkeletonGrid, InlineSpinner, ProductDetailSkeleton } from './Loaders'
 
-export const cash = (n: number) =>
-  new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(Number(n || 0))
+export const cash = (n: number, currencyOverride?: string) => {
+  const currency = currencyOverride || getActiveCurrency() || 'PHP'
+  const locale = currency === 'PHP' ? 'en-PH' : undefined
+  try {
+    return new Intl.NumberFormat(locale, { style: 'currency', currency }).format(Number(n || 0))
+  } catch {
+    return `₱${Number(n || 0).toFixed(2)}`
+  }
+}
 
 const sid = () => {
   let id = localStorage.getItem('shoplink-session')

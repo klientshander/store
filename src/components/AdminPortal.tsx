@@ -35,6 +35,7 @@ import {
   deleteOrder,
   deleteProduct,
   deleteReview,
+  getActiveCurrency,
   getActivityLogs,
   getAdminReviews,
   getCategories,
@@ -1131,7 +1132,7 @@ function ProductForm({
               <input required value={form.name ?? ''} onChange={(e) => set('name', e.target.value)} />
             </label>
             <label>
-              Price (USD)
+              Price ({getActiveCurrency()})
               <input
                 required
                 type="number"
@@ -2062,7 +2063,7 @@ function OrderFormModal({
           </label>
           {lines.length === 0 && (
             <label>
-              Total amount (USD)
+              Total amount ({getActiveCurrency()})
               <input
                 required
                 type="number"
@@ -2445,6 +2446,20 @@ function StoreSettingsPage({
                 onChange={(e) => set('support_email', e.target.value)}
                 placeholder="hello@nook.store"
               />
+            </label>
+            <label>
+              Store currency
+              <select value={form.currency ?? 'PHP'} onChange={(e) => set('currency', e.target.value)}>
+                <option value="PHP">PHP — Philippine Peso (₱)</option>
+                <option value="USD">USD — US Dollar ($)</option>
+                <option value="EUR">EUR — Euro (€)</option>
+                <option value="GBP">GBP — British Pound (£)</option>
+                <option value="SGD">SGD — Singapore Dollar (S$)</option>
+                <option value="JPY">JPY — Japanese Yen (¥)</option>
+                <option value="AUD">AUD — Australian Dollar (A$)</option>
+                <option value="CAD">CAD — Canadian Dollar (CA$)</option>
+                <option value="MYR">MYR — Malaysian Ringgit (RM)</option>
+              </select>
             </label>
           </div>
 

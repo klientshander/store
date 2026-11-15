@@ -136,6 +136,7 @@ export type StoreSettings = {
   free_shipping_text: string
   returns_text: string
   warranty_text: string
+  currency?: string
   updated_at?: string
 }
 

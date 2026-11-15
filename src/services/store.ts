@@ -22,6 +22,7 @@ import type {
 const fullProductsQuery = '*, category:categories(*), product_images(*), product_variants(*)'
 const baseProductsQuery = '*, category:categories(*), product_images(*)'
 const SETTINGS_CACHE_KEY = 'nook-store-settings'
+const CURRENCY_CACHE_KEY = 'nook-currency'
 
 function isMissingSchemaError(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false
@@ -630,14 +631,39 @@ export async function getProductPerformance(): Promise<ProductPerformance[]> {
     .sort((a, b) => b.clicks - a.clicks || b.views - a.views)
 }
 
+export function getActiveCurrency(): string {
+  try {
+    return (localStorage.getItem(CURRENCY_CACHE_KEY) || 'PHP').toUpperCase()
+  } catch {
+    return 'PHP'
+  }
+}
+
+function normalizeStoreSettings(raw: Partial<StoreSettings>, fallbackCurrency = 'PHP'): StoreSettings {
+  const merged: StoreSettings = { ...DEFAULT_STORE_SETTINGS, ...raw }
+  return {
+    ...merged,
+    currency: (raw.currency || fallbackCurrency || 'PHP').toUpperCase(),
+    free_shipping_text:
+      merged.free_shipping_text === 'Free shipping over $150'
+        ? 'Free shipping over ₱1,500'
+        : merged.free_shipping_text,
+  }
+}
+
 export function getCachedStoreSettings(): StoreSettings {
+  const fallbackCurrency = getActiveCurrency()
   try {
     const raw = localStorage.getItem(SETTINGS_CACHE_KEY)
-    if (raw) return { ...DEFAULT_STORE_SETTINGS, ...(JSON.parse(raw) as Partial<StoreSettings>) }
+    const normalized = raw
+      ? normalizeStoreSettings(JSON.parse(raw) as Partial<StoreSettings>, fallbackCurrency)
+      : normalizeStoreSettings({}, fallbackCurrency)
+    localStorage.setItem(CURRENCY_CACHE_KEY, normalized.currency || 'PHP')
+    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(normalized))
+    return normalized
   } catch {
-    // Ignore storage read errors
+    return normalizeStoreSettings({}, fallbackCurrency)
   }
-  return DEFAULT_STORE_SETTINGS
 }
 
 export async function getStoreSettings(): Promise<StoreSettings> {
@@ -646,9 +672,10 @@ export async function getStoreSettings(): Promise<StoreSettings> {
   try {
     const { data, error } = await supabase.from('store_settings').select('*').eq('id', 1).maybeSingle()
     if (error || !data) return cached
-    const merged: StoreSettings = { ...DEFAULT_STORE_SETTINGS, ...(data as Partial<StoreSettings>) }
-    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(merged))
-    return merged
+    const normalized = normalizeStoreSettings(data as Partial<StoreSettings>, cached.currency || 'PHP')
+    localStorage.setItem(CURRENCY_CACHE_KEY, normalized.currency || 'PHP')
+    localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(normalized))
+    return normalized
   } catch {
     return cached
   }
@@ -667,14 +694,25 @@ export async function saveStoreSettings(settings: StoreSettings): Promise<{ pers
     free_shipping_text: settings.free_shipping_text.trim() || DEFAULT_STORE_SETTINGS.free_shipping_text,
     returns_text: settings.returns_text.trim() || DEFAULT_STORE_SETTINGS.returns_text,
     warranty_text: settings.warranty_text.trim() || DEFAULT_STORE_SETTINGS.warranty_text,
+    currency: (settings.currency || 'PHP').trim().toUpperCase() || 'PHP',
   }
+  localStorage.setItem(CURRENCY_CACHE_KEY, cleaned.currency || 'PHP')
   localStorage.setItem(SETTINGS_CACHE_KEY, JSON.stringify(cleaned))
   window.dispatchEvent(new CustomEvent('nook-settings-updated', { detail: cleaned }))
 
   if (!supabase) return { persistedToDb: false }
-  const { error } = await supabase
+  const timestamp = new Date().toISOString()
+  let { error } = await supabase
     .from('store_settings')
-    .upsert({ ...cleaned, updated_at: new Date().toISOString() }, { onConflict: 'id' })
+    .upsert({ ...cleaned, updated_at: timestamp }, { onConflict: 'id' })
+
+  if (error && isMissingSchemaError(error)) {
+    const { currency: _currency, ...baseSettings } = cleaned
+    const retry = await supabase
+      .from('store_settings')
+      .upsert({ ...baseSettings, updated_at: timestamp }, { onConflict: 'id' })
+    error = retry.error
+  }
 
   if (error) {
     if (isMissingSchemaError(error)) return { persistedToDb: false }
